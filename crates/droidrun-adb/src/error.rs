@@ -25,6 +25,15 @@ pub enum AdbError {
     #[error("Install failed: {0}")]
     InstallFailed(String),
 
+    #[error("Uninstall failed: {0}")]
+    UninstallFailed(String),
+
+    #[error("Sync protocol error: {0}")]
+    SyncError(String),
+
+    #[error("Root not available: {0}")]
+    RootFailed(String),
+
     #[error("UTF-8 decode error: {0}")]
     Utf8(#[from] std::string::FromUtf8Error),
 

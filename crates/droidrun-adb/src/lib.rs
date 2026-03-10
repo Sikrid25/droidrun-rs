@@ -36,5 +36,8 @@ pub mod server;
 
 pub use device::AdbDevice;
 pub use error::{AdbError, Result};
-pub use models::{DeviceInfo, DeviceState, ForwardEntry};
+pub use models::{
+    AppDetail, CurrentApp, DeviceEvent, DeviceInfo, DeviceState, FileStat, ForwardEntry,
+    RebootMode, ReverseEntry, ScreenSize, ShellOutput, SyncDirEntry,
+};
 pub use server::AdbServer;

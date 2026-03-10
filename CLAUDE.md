@@ -40,12 +40,12 @@ droidrun-rs/
 │   │   │   ├── lib.rs          # Public API re-exports
 │   │   │   ├── connection.rs   # ADB wire protocol over TCP
 │   │   │   ├── device.rs       # Per-device operations
-│   │   │   ├── server.rs       # Device discovery
-│   │   │   ├── models.rs       # DeviceState, DeviceInfo, ForwardEntry
-│   │   │   └── error.rs        # AdbError
-│   │   ├── examples/           # 4 examples (basic, screenshot, port_forward, input_control)
+│   │   │   ├── server.rs       # Device discovery, lifecycle, tracking
+│   │   │   ├── models.rs       # DeviceState, DeviceInfo, ForwardEntry, FileStat, ShellOutput, ...
+│   │   │   └── error.rs        # AdbError (+ SyncError, UninstallFailed, RootFailed)
+│   │   ├── examples/           # 8 examples (basic, screenshot, port_forward, input_control, file_transfer, app_management, reverse_forward, device_info)
 │   │   └── tests/
-│   │       └── integration.rs  # 8 tests (needs ADB server)
+│   │       └── integration.rs  # 27 tests (needs ADB server)
 │   │
 │   ├── droidrun-core/          # High-level automation framework
 │   │   ├── src/
@@ -106,10 +106,13 @@ droidrun-rs/
 - Request format: `{length:04X}{command}` (4-char hex length prefix)
 - Response: `OKAY` or `FAIL{length:04X}{error_message}`
 - Each operation opens a **fresh TCP connection** (stateless)
-- Sync protocol for file push: `SEND` → `DATA` chunks → `DONE`
+- Sync protocol for file operations: `STAT`, `LIST`/`DENT`, `SEND`/`DATA`/`DONE`, `RECV`/`DATA`/`DONE`, `QUIT`
+- Reverse forwarding: `reverse:forward:tcp:<remote>;tcp:<local>` protocol
 
-**Key note**: `forward(0, remote_port)` uses a double-OKAY protocol.
-The server sends OKAY (accepted), then OKAY + port (allocation result).
+**Key notes**:
+- `forward(0, remote_port)` uses a double-OKAY protocol. The server sends OKAY (accepted), then OKAY + port (allocation result).
+- `shell2()` uses a sentinel pattern (`DROIDRUN_EXIT:$?`) to extract exit codes from shell commands.
+- `track_devices()` and `logcat()` use long-lived connections with `tokio::sync::mpsc` channels for streaming.
 
 ### Portal Communication (`droidrun-core/portal`)
 
@@ -183,8 +186,8 @@ pub trait DeviceDriver: Send + Sync {
 // droidrun-adb
 enum AdbError {
     Io, ServerFailed, Protocol, NoDevice, DeviceNotOnline,
-    DeviceNotFound, ShellError, InstallFailed, Utf8, Parse,
-    ConnectionRefused, Timeout,
+    DeviceNotFound, ShellError, InstallFailed, UninstallFailed,
+    SyncError, RootFailed, Utf8, Parse, ConnectionRefused, Timeout,
 }
 
 // droidrun-core
@@ -224,12 +227,12 @@ Global flags: `--serial <s>`, `--tcp`, `--verbose`
 
 | Category | Count | Location | Requires |
 |----------|-------|----------|----------|
-| Unit tests (adb) | 9 | `src/**/*.rs` `#[cfg(test)]` | Nothing |
+| Unit tests (adb) | 29 | `src/**/*.rs` `#[cfg(test)]` | Nothing |
 | Unit tests (core) | 54 | `src/**/*.rs` `#[cfg(test)]` | Nothing |
-| Integration (adb) | 8 | `crates/droidrun-adb/tests/` | ADB server + device |
+| Integration (adb) | 27 | `crates/droidrun-adb/tests/` | ADB server + device |
 | Integration (core) | 10 | `crates/droidrun-core/tests/` | Emulator + Portal APK |
 | Doc tests | 2 | `lib.rs` doc comments | Nothing (compile only) |
-| **Total** | **83** | | |
+| **Total** | **122** | | |
 
 ### Running Tests
 
@@ -275,6 +278,10 @@ cargo run -p droidrun-core --example driver_basics
 | `screenshot` | Take and save PNG screenshot |
 | `port_forward` | Dynamic (port 0) and fixed port forwarding lifecycle |
 | `input_control` | Tap, swipe, key events (Home/Back/Enter) |
+| `file_transfer` | Push, stat, list_dir, pull, pull_bytes via sync protocol |
+| `app_management` | app_current, app_info, list_packages, app_stop, app_clear |
+| `reverse_forward` | Reverse port forwarding: create, list, remove |
+| `device_info` | getprop, window_size, rotation, features, wlan_ip, shell2 |
 
 ### droidrun-core Examples
 
@@ -287,7 +294,7 @@ cargo run -p droidrun-core --example driver_basics
 | `portal_setup` | `PortalManager` lifecycle + `PortalClient` direct communication |
 | `app_automation` | Practical workflow: list apps → open Settings → find & tap → navigate |
 
-> All 10 examples require a connected device/emulator with droidrun-portal installed.
+> All 14 examples require a connected device/emulator. droidrun-core examples also need droidrun-portal installed.
 
 ## Dependencies
 
