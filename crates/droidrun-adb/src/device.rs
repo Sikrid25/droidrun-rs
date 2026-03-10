@@ -127,10 +127,12 @@ impl AdbDevice {
 
     /// Run a shell command and return both stdout and exit code.
     ///
-    /// Appends `; echo DROIDRUN_EXIT:$?` to capture the exit code.
+    /// Wraps the command in a subshell `(cmd)` so that even `exit N` won't
+    /// prevent the sentinel from being printed, then appends
+    /// `; echo DROIDRUN_EXIT:$?` to capture the exit code.
     pub async fn shell2(&self, cmd: &str) -> Result<ShellOutput> {
         let sentinel = "DROIDRUN_EXIT:";
-        let full_cmd = format!("{cmd}; echo {sentinel}$?");
+        let full_cmd = format!("({cmd}); echo {sentinel}$?");
         let raw = self.shell(&full_cmd).await?;
 
         let (stdout, exit_code) = if let Some(pos) = raw.rfind(sentinel) {
