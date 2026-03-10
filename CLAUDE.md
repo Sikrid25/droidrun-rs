@@ -393,3 +393,47 @@ suggests (e.g. v0.4.6 for an SDK not in the map), it skips the reinstall.
 `parse_content_provider_output()` unwraps the portal response envelope
 (`{"status":"success","result":...}`) in **all code paths** — direct JSON,
 `result=` prefix, and last resort. Callers must never double-unwrap.
+
+### shell2() — subshell wrapping
+
+`shell2()` wraps the user command in a subshell `(cmd)` before appending
+the sentinel. This prevents `exit N` from terminating the shell before
+the sentinel can be printed:
+
+```rust
+// The actual command sent:
+format!("({cmd}); echo DROIDRUN_EXIT:$?")
+```
+
+## crates.io
+
+Published crates (v0.1.0):
+
+| Crate | URL | Description |
+|-------|-----|-------------|
+| `droidrun-adb` | [crates.io/crates/droidrun-adb](https://crates.io/crates/droidrun-adb) | Low-level async ADB client |
+| `droidrun-core` | [crates.io/crates/droidrun-core](https://crates.io/crates/droidrun-core) | High-level automation framework |
+| `droidrun-cli` | *(not published)* | CLI tool — `publish = false` |
+
+### Publishing workflow
+
+```bash
+# 1. Bump version in workspace Cargo.toml [workspace.package] version
+# 2. Publish in dependency order (droidrun-adb has no internal deps)
+cargo publish -p droidrun-adb
+# Wait for crates.io index update (~1-2 min)
+cargo publish -p droidrun-core
+# droidrun-cli is publish = false, skip
+```
+
+### README structure
+
+Each published crate has its own `README.md` inside its directory (shown on
+crates.io/docs.rs), while the root `README.md` covers the entire workspace
+(shown on GitHub).
+
+| File | Audience |
+|------|----------|
+| `README.md` (root) | GitHub visitors — workspace overview |
+| `crates/droidrun-adb/README.md` | crates.io — ADB API reference |
+| `crates/droidrun-core/README.md` | crates.io — driver/portal/UI docs |
