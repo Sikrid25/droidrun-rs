@@ -7,7 +7,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 license = "MIT"
 rust-version = "1.85.0"
@@ -55,5 +55,5 @@ clap = { version = "4", features = ["derive"] }
 tokio-test = "0.4"
 
 # Internal crates
-droidrun-adb = { path = "crates/droidrun-adb", version = "0.1.0" }
-droidrun-core = { path = "crates/droidrun-core", version = "0.1.0" }
+droidrun-adb = { path = "crates/droidrun-adb", version = "0.1.1" }
+droidrun-core = { path = "crates/droidrun-core", version = "0.1.1" }

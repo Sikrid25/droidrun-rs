@@ -264,7 +264,7 @@ dependencies = [
 
 [[package]]
 name = "droidrun-adb"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "regex",
  "thiserror 2.0.18",
@@ -276,7 +276,7 @@ dependencies = [
 
 [[package]]
 name = "droidrun-cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -290,7 +290,7 @@ dependencies = [
 
 [[package]]
 name = "droidrun-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "base64",
