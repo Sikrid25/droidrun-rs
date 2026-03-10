@@ -1,0 +1,26 @@
+[package]
+name = "droidrun-core"
+description = "Android device automation core library — driver, portal, UI state"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+droidrun-adb = { workspace = true }
+tokio = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+base64 = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+regex = { workspace = true }
+tempfile = { workspace = true }
+async-trait = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+tokio-test = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde_json = { workspace = true }

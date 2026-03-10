@@ -1,0 +1,21 @@
+[package]
+name = "droidrun-cli"
+description = "CLI tool for Android device automation"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "droidrun"
+path = "src/main.rs"
+
+[dependencies]
+droidrun-core = { workspace = true }
+droidrun-adb = { workspace = true }
+tokio = { workspace = true }
+clap = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde_json = { workspace = true }
