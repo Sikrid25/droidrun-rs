@@ -145,13 +145,15 @@ impl DeviceDriver for AndroidDriver {
 
     async fn drag(
         &self,
-        _x1: i32,
-        _y1: i32,
-        _x2: i32,
-        _y2: i32,
-        _duration_ms: u32,
+        x1: i32,
+        y1: i32,
+        x2: i32,
+        y2: i32,
+        duration_ms: u32,
     ) -> Result<()> {
-        Err(DroidrunError::NotSupported("drag is not implemented yet".into()))
+        let device = self.adb_device()?;
+        device.drag(x1, y1, x2, y2, duration_ms).await?;
+        Ok(())
     }
 
     // ── App management ─────────────────────────────────────────
