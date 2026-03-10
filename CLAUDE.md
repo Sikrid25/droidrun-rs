@@ -358,6 +358,7 @@ PORTAL_REPO:       "droidrun/droidrun-portal"
 
 ## Known Behaviors
 
+- `AndroidDriver.drag()` delegates to `AdbDevice.drag()` (was a stub before v0.1.2)
 - `input_text()` returns `false` when no text field is focused (not an error)
 - `forward(0, port)` uses ADB's double-OKAY protocol for port allocation
 - Portal screenshots come as base64 JSON over TCP, raw PNG over ADB fallback
