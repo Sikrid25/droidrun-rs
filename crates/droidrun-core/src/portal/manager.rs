@@ -104,7 +104,7 @@ impl PortalManager {
             .map(|s| s.contains(super::A11Y_SERVICE))
             .unwrap_or(false);
 
-        // Check version compatibility
+        // Check version compatibility (only upgrade, never downgrade)
         let mut needs_upgrade = false;
         if is_installed {
             if let Some(ref installed_ver) = installed_version {
@@ -113,10 +113,17 @@ impl PortalManager {
                 {
                     let expected_clean = expected.trim_start_matches('v');
                     if installed_ver != expected_clean {
-                        info!(
-                            "portal version mismatch: installed={installed_ver}, expected={expected}"
-                        );
-                        needs_upgrade = true;
+                        // Only upgrade if expected version is newer than installed
+                        if is_version_newer(expected_clean, installed_ver) {
+                            info!(
+                                "portal outdated: installed={installed_ver}, expected={expected_clean}"
+                            );
+                            needs_upgrade = true;
+                        } else {
+                            debug!(
+                                "portal installed={installed_ver} >= expected={expected_clean}, skipping downgrade"
+                            );
+                        }
                     }
                 }
             }
@@ -221,8 +228,9 @@ impl PortalManager {
         tokio::fs::write(&path, &bytes)
             .await
             .map_err(DroidrunError::Io)?;
-        // Keep the file alive (don't let tmp drop delete it)
-        tmp.into_temp_path();
+        // Persist the file so it survives until install() reads it.
+        // into_temp_path() still deletes on drop, so we must call keep().
+        let _ = tmp.into_temp_path().keep();
 
         debug!("downloaded {} bytes to {path}", bytes.len());
         Ok(path)
@@ -247,6 +255,21 @@ impl PortalManager {
 
         warn!("portal service did not become responsive within timeout");
         Ok(())
+    }
+}
+
+/// Check if `a` is strictly newer (greater) than `b` using semver comparison.
+fn is_version_newer(a: &str, b: &str) -> bool {
+    let parse = |s: &str| -> Option<Vec<u32>> {
+        s.trim_start_matches('v')
+            .split('.')
+            .map(|p| p.parse().ok())
+            .collect()
+    };
+
+    match (parse(a), parse(b)) {
+        (Some(va), Some(vb)) => va > vb,
+        _ => false, // If parsing fails, don't upgrade
     }
 }
 
@@ -307,5 +330,25 @@ mod tests {
     #[test]
     fn test_version_in_range_no_dash() {
         assert!(!version_in_range("0.4.0", "0.4.0"));
+    }
+
+    #[test]
+    fn test_is_version_newer() {
+        assert!(is_version_newer("0.6.0", "0.4.6"));
+        assert!(is_version_newer("1.0.0", "0.9.9"));
+        assert!(is_version_newer("0.4.7", "0.4.6"));
+    }
+
+    #[test]
+    fn test_is_version_not_newer() {
+        assert!(!is_version_newer("0.4.6", "0.6.0"));
+        assert!(!is_version_newer("0.4.6", "0.4.6")); // equal = not newer
+        assert!(!is_version_newer("0.3.0", "0.4.6"));
+    }
+
+    #[test]
+    fn test_is_version_newer_with_prefix() {
+        assert!(is_version_newer("v0.6.0", "0.4.6"));
+        assert!(is_version_newer("v1.0.0", "v0.9.9"));
     }
 }

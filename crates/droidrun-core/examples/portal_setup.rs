@@ -77,12 +77,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // ── Health Check (ensure_ready) ──────────────────────────────
     // This checks version compatibility, accessibility service,
-    // and auto-fixes any issues
+    // and auto-fixes any issues. It will only upgrade, never downgrade.
     println!("\nRunning health check...");
     let manager = PortalManager::new(device.clone());
     let sdk = device.shell("getprop ro.build.version.sdk").await?;
-    manager.ensure_ready(sdk.trim(), false).await?;
-    println!("Health check passed!");
+    match manager.ensure_ready(sdk.trim(), false).await {
+        Ok(()) => println!("Health check passed!"),
+        Err(e) => println!("Health check warning: {e} (portal may still work)"),
+    }
 
     Ok(())
 }
