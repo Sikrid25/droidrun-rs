@@ -294,7 +294,7 @@ cargo run -p droidrun-core --example driver_basics
 | Crate | Version | Purpose |
 |-------|---------|---------|
 | tokio | 1 (full) | Async runtime |
-| reqwest | 0.12 | HTTP client (Portal TCP) |
+| reqwest | 0.13 | HTTP client (Portal TCP) |
 | serde / serde_json | 1 | JSON serialization |
 | base64 | 0.22 | Encoding (keyboard text, screenshots) |
 | thiserror | 2 | Error type macros |
