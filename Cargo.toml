@@ -11,6 +11,11 @@ version = "0.1.0"
 edition = "2024"
 license = "MIT"
 rust-version = "1.85.0"
+authors = ["Sikrid25"]
+repository = "https://github.com/Sikrid25/droidrun-rs"
+homepage = "https://github.com/Sikrid25/droidrun-rs"
+keywords = ["android", "adb", "automation", "mobile"]
+categories = ["development-tools"]
 
 [workspace.dependencies]
 # Async runtime
@@ -50,5 +55,5 @@ clap = { version = "4", features = ["derive"] }
 tokio-test = "0.4"
 
 # Internal crates
-droidrun-adb = { path = "crates/droidrun-adb" }
-droidrun-core = { path = "crates/droidrun-core" }
+droidrun-adb = { path = "crates/droidrun-adb", version = "0.1.0" }
+droidrun-core = { path = "crates/droidrun-core", version = "0.1.0" }

@@ -1,10 +1,16 @@
 [package]
 name = "droidrun-adb"
-description = "Async ADB (Android Debug Bridge) client library"
+description = "Async ADB (Android Debug Bridge) client library — wire protocol + sync protocol over TCP"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "../../README.md"
 
 [dependencies]
 tokio = { workspace = true }
