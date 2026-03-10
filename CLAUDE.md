@@ -43,6 +43,7 @@ droidrun-rs/
 │   │   │   ├── server.rs       # Device discovery
 │   │   │   ├── models.rs       # DeviceState, DeviceInfo, ForwardEntry
 │   │   │   └── error.rs        # AdbError
+│   │   ├── examples/           # 4 examples (basic, screenshot, port_forward, input_control)
 │   │   └── tests/
 │   │       └── integration.rs  # 8 tests (needs ADB server)
 │   │
@@ -57,7 +58,7 @@ droidrun-rs/
 │   │   │   ├── portal/
 │   │   │   │   ├── mod.rs      # Constants
 │   │   │   │   ├── client.rs   # PortalClient (TCP + ContentProvider)
-│   │   │   │   ├── manager.rs  # APK lifecycle & setup
+│   │   │   │   ├── manager.rs  # APK lifecycle & setup + is_version_newer()
 │   │   │   │   ├── a11y.rs     # Accessibility service control
 │   │   │   │   └── keyboard.rs # DroidRun keyboard IME setup
 │   │   │   ├── ui/
@@ -71,6 +72,7 @@ droidrun-rs/
 │   │   │   │   └── geometry.rs # Bounds, overlap, clear-point finding
 │   │   │   └── helpers/
 │   │   │       └── mod.rs
+│   │   ├── examples/           # 6 examples (driver_basics, state_provider, recording, ...)
 │   │   └── tests/
 │   │       └── integration.rs  # 10 tests (needs emulator + portal)
 │   │
@@ -223,10 +225,11 @@ Global flags: `--serial <s>`, `--tcp`, `--verbose`
 | Category | Count | Location | Requires |
 |----------|-------|----------|----------|
 | Unit tests (adb) | 9 | `src/**/*.rs` `#[cfg(test)]` | Nothing |
-| Unit tests (core) | 51 | `src/**/*.rs` `#[cfg(test)]` | Nothing |
+| Unit tests (core) | 54 | `src/**/*.rs` `#[cfg(test)]` | Nothing |
 | Integration (adb) | 8 | `crates/droidrun-adb/tests/` | ADB server + device |
 | Integration (core) | 10 | `crates/droidrun-core/tests/` | Emulator + Portal APK |
 | Doc tests | 2 | `lib.rs` doc comments | Nothing (compile only) |
+| **Total** | **83** | | |
 
 ### Running Tests
 
@@ -255,6 +258,36 @@ cargo test -p droidrun-core --test integration -- test_portal_ping --nocapture
 - `com.droidrun.portal` APK installed
 - Accessibility service enabled for Portal
 - Tests auto-skip if `SKIP_DEVICE_TESTS` env var is set
+
+## Examples
+
+```bash
+# Run a specific example
+cargo run -p droidrun-adb --example basic
+cargo run -p droidrun-core --example driver_basics
+```
+
+### droidrun-adb Examples
+
+| Example | Description |
+|---------|-------------|
+| `basic` | Connect to device, shell commands, device info, list packages |
+| `screenshot` | Take and save PNG screenshot |
+| `port_forward` | Dynamic (port 0) and fixed port forwarding lifecycle |
+| `input_control` | Tap, swipe, key events (Home/Back/Enter) |
+
+### droidrun-core Examples
+
+| Example | Description |
+|---------|-------------|
+| `driver_basics` | High-level `AndroidDriver` API — connect, state, tap, apps |
+| `state_provider` | Full UI pipeline: filter → format → UIState |
+| `recording` | `RecordingDriver` proxy for action logging (JSON output) |
+| `element_search` | Composable filters: `text_matches`, `id_matches`, `clickable`, `below` |
+| `portal_setup` | `PortalManager` lifecycle + `PortalClient` direct communication |
+| `app_automation` | Practical workflow: list apps → open Settings → find & tap → navigate |
+
+> All 10 examples require a connected device/emulator with droidrun-portal installed.
 
 ## Dependencies
 
@@ -324,3 +357,32 @@ PORTAL_REPO:       "droidrun/droidrun-portal"
 - `screencap -p` may have `\n` → `\r\n` conversion on some devices
 - `parse_content_provider_output` unwraps portal envelope in ALL code paths —
   callers should NOT call `unwrap_portal_response` again
+
+## Important Gotchas
+
+### tempfile crate — `.keep()` is required
+
+`NamedTempFile::into_temp_path()` returns a `TempPath` that **still deletes
+on drop**. If you need the file to persist (e.g. for `install()` to read),
+you must call `.keep()`:
+
+```rust
+// WRONG — file is deleted immediately when TempPath drops
+tmp.into_temp_path();
+
+// CORRECT — file persists on disk
+let _ = tmp.into_temp_path().keep();
+```
+
+### Portal version management — no downgrade
+
+`ensure_ready()` uses `is_version_newer()` to compare versions. It will only
+upgrade when the expected version is strictly newer than installed. If the
+device already has a newer Portal (e.g. v0.6.0) than what the version map
+suggests (e.g. v0.4.6 for an SDK not in the map), it skips the reinstall.
+
+### Portal envelope unwrapping
+
+`parse_content_provider_output()` unwraps the portal response envelope
+(`{"status":"success","result":...}`) in **all code paths** — direct JSON,
+`result=` prefix, and last resort. Callers must never double-unwrap.
